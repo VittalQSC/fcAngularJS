@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html ng-app="app">
+<head>
+	<title>AngularJS App</title>
+
+	<!-- SPELLS -->
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular.min.js">
+	</script>
+	<!-- load angular -->
+	<script type="text/javascript">
+	var app = angular.module('app', [])
+
+	app.controller("MyCtrl", function ($scope, $http) {
+
+		$scope.newArticle = {
+			title: '',
+			text: '',
+			author: '',
+			createDate: ''
+		};
+
+		$scope.minLengthValidator = function (text) {
+			return text.length >= 20;
+		}
+
+		$scope.reset = function () {
+			$scope.newArticle = {
+				title: '',
+				text: '',
+				author: '',
+				createDate: ''
+			};			
+		}
+
+		$scope.create = function (article, isValid) {
+			// if (!isValid) {
+			// 	alert('form isnt valid');
+			// 	return;
+			// }
+			console.log(article);
+			
+			$http.post('/articles/', article)
+				.then(function (s) {console.log(s);}, function (e) {console.log(e);});
+
+			$http.get('/articles/')
+				.then(function (result) {
+					console.log('angular data articles2! ' + result);
+					console.log(result.data);
+					$scope.articles = result.data;
+				}, function (err) {console.log(err);});	
+
+			$scope.reset();						
+		}
+
+		// $http.get('/').then(function (data) {
+		// 	console.log('angular data articles1! ' + data);
+		// 	console.log(data);
+		// }, function (err) {console.log(err);});	
+			
+		$http.get('/articles/').then(function (result) {
+			console.log('angular data articles2! ' + result);
+			console.log(result.data);
+			$scope.articles = result.data;
+		}, function (err) {console.log(err);});
+	});
+
+
+	app.directive('myValidator', function (){ 
+	   return {
+	      require: 'ngModel',
+	      link: function(scope, elem, attr, ngModel) {
+	      	// console.log("IM HERE");
+	          //For DOM -> model validation
+           ngModel.$parsers.unshift(function(value) {
+             var valid = value.length >= 20;
+             ngModel.$setValidity('customValidator', valid);
+             return valid ? value : undefined;
+           });
+
+	      	// ngModel.$formatters.unshift(function(value) {
+	      	// 	console.log(value);
+	       //       ngModel.$setValidity('customValidator', value.length >= 20);
+	       //       return value;
+        //  	});
+
+	      }
+	   };
+	});
+
+	</script>
+</head>
+<body ng-controller="MyCtrl">
+	<div style="padding-top: 50px"></div>
+
+	<form name="myForm" class="simple-form" ng-submit="create(newArticle)">
+	   <label>Title: <input type="title" ng-model="newArticle.title" required /></label><br />
+	   <label>Text: 
+	   	
+	   		<input type="text" name="text" ng-model="newArticle.text" my-validator required />
+	   </label>
+	   	<br />
+	   <label>Author: <input type="author" ng-model="newArticle.author" /></label><br />
+	   <label>Creation Date: <input type="createDate" ng-model="newArticle.createDate" /></label><br />
+	   
+	   <div ng-show="myForm.text.$error.customValidator">
+	   		length >= 20
+	   </div>
+
+	   <input type="button" ng-click="reset()" value="Reset" />
+	   <button type="submit" 
+	   ng-disabled="myForm.$invalid" 
+	   value="Save">Add an article</button>
+	</form>
+
+	<div style="padding-top: 50px"></div>
+
+	<div>Articles number: {{articles.length}}</div>
+	<div></div>
+	<ul>
+		<li ng-repeat="article in articles">
+			<h1>{{article.title}}</h1>
+			<div>{{article.text}}</div>
+			<strong>{{article.author}}</strong>
+			<div>
+				<small>{{article.createDate}}</small>
+			</div>
+			<div>----</div>
+		</li>
+	</ul>
+</body>
+</html>
